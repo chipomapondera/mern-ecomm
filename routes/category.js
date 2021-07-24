@@ -27,9 +27,9 @@ router.delete(
     isAdmin, 
     remove
 );
-router.get("/categories", list)
+router.get("/categories", list);
 
-router.param("categoryId", categoryById)
-router.param("userId", userById)
+router.param("categoryId", categoryById);
+router.param("userId", userById);
 
-module.exports = router
+module.exports = router;
