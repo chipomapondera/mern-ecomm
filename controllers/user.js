@@ -5,7 +5,7 @@ exports.userById = (req, res, next, id) =>{
         if(err || !user) {
             return res.status(400).json({
                 error: "User not found"
-            })
+            });
         }
         req.profile = user;
         next();
@@ -13,23 +13,23 @@ exports.userById = (req, res, next, id) =>{
 };
 
 exports.read = (req, res) => {
-    req.profile.hashedpassword = undefined;
+    req.profile.hashed_password = undefined;
     req.profile.salt = undefined;
     return res.json(req.profile);
 };
 
 exports.update = (req, res) => {
     User.findOneAndUpdate(
-        {_id: req.profile._id}, 
-        {$set: req.body}, 
-        {new: true},
+        { _id: req.profile._id }, 
+        { $set: req.body }, 
+        { new: true },
         (err, user) => {
             if(err) {
                 return res.status(400).json({
                     error: "You are not authorised to perform this action"
-                })
+                });
             }
-            user.hashedpassword = undefined;
+            user.hashed_password = undefined;
             user.salt = undefined;
             res.json(user);
         }

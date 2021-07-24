@@ -1,29 +1,31 @@
 const formidable = require("formidable");
 const _ = require("lodash");
 const fs = require("fs");
-const {errorHandler} = require("../helpers/dbErrorHandler");
+const { errorHandler } = require("../helpers/dbErrorHandler");
 const Product = require("../models/product");
 
 exports.productById = (req, res, next, id) => {
-    Product.findById(id).exec((err, product) => {
-        if(err || !product) {
-            return res.status(400).json({
-                error: "Product not found"
-            });
-        }
-        req.product = product;
-        next();
-    });
+    Product.findById(id)
+        .populate("category")
+        .exec((err, product) => {
+            if(err || !product) {
+                return res.status(400).json({
+                    error: "Product not found"
+                });
+            }
+            req.product = product;
+            next();
+        });
 };
 
 exports.read = (req, res) => {
     req.product.photo = undefined
     return res.json(req.product);
-}
+};
 
 exports.create = (req, res) => {
-    let form = new formidable.IncomingForm()
-    form.keepExtensions = true
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
     form.parse(req, (err, fields, files) => {
         if(err) {
             return res.status(400).json({
@@ -31,7 +33,14 @@ exports.create = (req, res) => {
             });
         }
         //check for all fields
-        const { name, description, price, category, quantity, shipping } = fields
+        const { 
+            name, 
+            description, 
+            price, 
+            category, 
+            quantity, 
+            shipping 
+        } = fields;
 
         if(
             !name || 
@@ -46,23 +55,26 @@ exports.create = (req, res) => {
             });
         }
 
-        let product = new Product(fields)
+        let product = new Product(fields);
+
+        // 1kb = 1000
+        // 1mp = 1000000
 
         if(files.photo) {
-            // console.log("FILES PHOTO: ", files.photo)
+            // console.log("FILES PHOTO: ", files.photo);
             if(files.photo.size > 1000000) {
                 return res.status(400).json({
-                    error: "Image should be less that 1mb"
+                    error: "Image should be less than 1mb"
                 });
             }
-            product.photo.data = fs.readFileSync(files.photo.path)
-            product.photo.contentType = files.photo.type
+            product.photo.data = fs.readFileSync(files.photo.path);
+            product.photo.contentType = files.photo.type;
         }
 
         product.save((err, result) => {
             if(err) {
                 return res.status(400).json({
-                    error: errorHandler(error)
+                    error: errorHandler(err)
                 });
             }
             res.json(result);
@@ -71,7 +83,7 @@ exports.create = (req, res) => {
 };
 
 exports.remove = (req, res) => {
-    let product = req.product
+    let product = req.product;
     product.remove((err, deletedProduct) => {
         if(err) {
             return res. status(400).json({
@@ -85,8 +97,8 @@ exports.remove = (req, res) => {
 };
 
 exports.update = (req, res) => {
-    let form = new formidable.IncomingForm()
-    form.keepExtensions = true
+    let form = new formidable.IncomingForm();
+    form.keepExtensions = true;
     form.parse(req, (err, fields, files) => {
         if(err) {
             return res.status(400).json({
@@ -109,8 +121,8 @@ exports.update = (req, res) => {
             });
         }
 
-        let product = req.product
-        product = _.extend(product, fields)
+        let product = req.product;
+        product = _.extend(product, fields);
 
         if(files.photo) {
             // console.log("FILES PHOTO: ", files.photo)
@@ -119,8 +131,8 @@ exports.update = (req, res) => {
                     error: "Image should be less that 1mb"
                 });
             }
-            product.photo.data = fs.readFileSync(files.photo.path)
-            product.photo.contentType = files.photo.type
+            product.photo.data = fs.readFileSync(files.photo.path);
+            product.photo.contentType = files.photo.type;
         }
 
         product.save((err, result) => {
@@ -169,7 +181,7 @@ exports.list = (req, res) => {
 exports.listRelated = (req, res) => {
     let limit = req.query.limit ? parseInt(req.query.limit) : 6;
 
-    Product.find({_id: {$ne: req.product}, category: req.product.category})
+    Product.find({ _id: { $ne: req.product }, category: req.product.category })
     .limit(limit)
     .populate('category', "_id name")
     .exec((err, products) => {
@@ -258,11 +270,11 @@ exports.listSearch = (req, res) => {
     const query = {};
     // assign search value to query.name
     if(req.query.search) {
-        query.name = {$regex: req.query.search, $options: "i"}
+        query.name = {$regex: req.query.search, $options: "i"};
         // assign category value to query.category
         if(req.query.category && req.query.category != "All") {
             query.category = req.query.category
-        };
+        }
         //find the product based on query object with 2 properties
         // search and category
         Product.find(query, (err, products) => {
@@ -274,7 +286,7 @@ exports.listSearch = (req, res) => {
             res.json(products);
         }).select("-photo");
     }
-}
+};
 
 
 
