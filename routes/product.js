@@ -50,4 +50,4 @@ router.get("/product/photo/:productId", photo)
 router.param("userId", userById);
 router.param("productId", productById);
 
-module.exports = router
+module.exports = router;
